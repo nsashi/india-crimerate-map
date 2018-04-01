@@ -2,44 +2,246 @@
 <html>
 <head>
     <meta charset='utf-8' />
-    <title>Fly to a location based on scroll position</title>
+    <title></title>
     <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
-    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
-    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
-    <script src='main.js'></script>
-    <link href='main.css' rel='stylesheet' />
+    <script src='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v0.44.1/mapbox-gl.css' rel='stylesheet' />
 </head>
 <body>
+<nav id="menu"></nav>
 <div id='map'></div>
-<div id='features'>
-    <section id='part-1' class='active'>
-        <h3>Seismic activity and the Drifiting Indian Plate</h3>
-        <p>About 140 million years ago, Gondwana (The Super Continent) broke into Antarctic, African, Australian and the Indian Plate. The Indian Plate drifting north collided with Eurasian plate,giving rise to the Himalayas.</p>
+<div class='map-overlay' id='legend'></div>
+<style>
 
-        <p>The cause of major earthquakes in these regions is due to the <em>active movement</em> of Indian Plate northwards by 5cm per year. These collisions are cause of seismic activities.</p>
-    </section>
-    <section id='part-2'>
-        <h3>Assam-Tibet Earthquake 1950</h3>
-        <h4>Magnitude: 8.6</h4>
-        <h4>Location: Between Assam and Tibet</h4>
-        <img src='http://www.hi-likes.com/cms/fotoalbum/3069.jpg' width='100%' />
-        <p>The largest recorded quake by <i>Continental Collision</i> obliterated many villages.  Led to landlsildes, rising levels of river waters and consequently floods.</p>
-    </section>
-    <section id='part-3'>
-        <h3>Nepal-Bihar Earthquake 1934</h3>
-        <h4>Magnitude: 8.0</h4>
-        <h4>Location: 9.5 km south of Mount Everest</h4>
-        <img src='http://www.merinews.com/upload/imageGallery/bigImage/1366268093481_Bihar%20earthquake.jpg' width='100%' />
-        <p>One of the worst Earthquakes in Nepal history . Sand and Water vents appeared throughout central vents of the earthquake area.</p>
+body { margin:0; padding:0; }
+        h2, h3 {
+            margin: 10px;
+            font-size: 1.2em;
+        }
+        h3 {
+            font-size: 1em;
+        }
+        p {
+            font-size: 0.85em;
+            margin: 10px;
+            text-align: left;
+        }
+        .map-overlay {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.8);
+            margin-right: 20px;
+            font-family: Arial, sans-serif;
+            overflow: auto;
+            border-radius: 3px;
+        }
+        #map {
+            position:absolute;
+            top:0;
+            bottom:0;
+            width:100%;
+        }
+        #features {
+            top: 0;
+            height: 100px;
+            margin-top: 20px;
+            width: 250px;
+        }
+        #legend {
+            padding: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+            line-height: 18px;
+            height: 150px;
+            margin-bottom: 40px;
+            width: 100px;
+        }
+        .legend-key {
+            display:inline-block;
+            border-radius: 20%;
+            width: 10px;
+            height: 10px;
+            margin-right: 5px;
+        }
 
-    </section>
-    <section id='part-4'>
-        <h3>Sagaing Earthquake 1946</h3>
-        <h4>Magnitude: 8</h4>
-        <h4>Location: Sagaing Fault, Mayanmar</h4>
-        <img src='https://image.slidesharecdn.com/maptellingthetechnicalstoryofnepalearthquake-150429102217-conversion-gate02/95/map-telling-the-technical-story-of-nepal-earthquake-precaution-lesson-to-myanmar-3-638.jpg?cb=1430303830' width='100%' />
-        <p> Between 1930 and 1956, six M7.0+ earthquakes occurred near the right-lateral Sagaing Fault, resulting in severe damage in Myanmar including the generation of landslides, liquefaction and the loss of 610 lives.</p>
-    </section>
-</div>
+ #menu {
+        background: #fff;
+        position: absolute;
+        z-index: 1;
+        top: 10px;
+        right: 10px;
+        border-radius: 3px;
+        width: 120px;
+        border: 1px solid rgba(0,0,0,0.4);
+        font-family: 'Open Sans', sans-serif;
+    }
+
+    #menu a {
+        font-size: 13px;
+        color: #404040;
+        display: block;
+        margin: 0;
+        padding: 0;
+        padding: 10px;
+        text-decoration: none;
+        border-bottom: 1px solid rgba(0,0,0,0.25);
+        text-align: center;
+    }
+
+    #menu a:last-child {
+        border: none;
+    }
+
+    #menu a:hover {
+        background-color: #f8f8f8;
+        color: #404040;
+    }
+
+    #menu a.active {
+        background-color: #3887be;
+        color: #ffffff;
+    }
+
+    #menu a.active:hover {
+        background: #3074a4;
+    }
+
+    </style>
+
+    <script>
+    // define access token
+mapboxgl.accessToken = 'pk.eyJ1IjoicG1hdGhldyIsImEiOiJjamZndjE5YnEzaGNzMnFtbWV1YzJxd2h2In0.xNYB4P4ljTh4ogGvlGNJ0A';
+
+//create map
+var map = new mapboxgl.Map({
+    container: 'map', // container id
+    style: 'mapbox://styles/pmathew/cjff56k8rb8mu2rs55ycs27f2', // map style URL from Mapbox Studio
+    center: [82.8, 23.88],
+        zoom: 4,
+        bearing: 0,
+        pitch: 0,
+});
+
+// wait for map to load before adjusting it
+map.on('load', function() {
+
+    // make a pointer cursor
+    map.getCanvas().style.cursor = 'default';
+
+    map.addSource('HDI', {
+        type: 'vector',
+        url: 'mapbox://styles/pmathew/cjff56k8rb8mu2rs55ycs27f2'
+    });
+    map.addLayer({
+        'id': 'HDI',
+        'source': 'HDI',
+        'layout': {
+            'visibility': 'visible'
+        },
+        'source-layer': 'HDI'
+    });
+
+  
+    // define layer names
+    var HDIlayers = ['0-0.5', '0.5-0.55', '0.55-0.6', '0.6-0.65', '0.65-0.7', '0.7-0.75'];
+    var HDIcolors = ['#ffffcc', '#d9f0a3', '#addd8e', '#78c679', '#31a354', '#006837'];
+
+    var Othercolors = ['#FED976', '#FEB24C', '#FD8D3C', '#FC4E2A', '#E31A1C', '#BD0026', '#800026'];
+    var TClayers = ['0-100', '101-200', '201-300', '301-400', '401-500', '501-600', '601-700'];
+    var VClayers = ['0-20', '21-40', '41-60', '61-80', '81-100', '101-120', '121-140'];
+    var NVClayers = ['0-20', '21-50', '51-100', '101-150', '151-200', '201-250', '251-300'];
+    var WClayers = ['0-30', '31-60', '61-80', '81-100', '101-120', '121-140', '141-160'];
+
+    var layers = HDIlayers;
+    var colors = HDIcolors;
+
+  
+var toggleableLayerIds = [ 'HDI', 'Total Crime', 'Violent Crimes', 'Non-violent Crimes', 'Crimes Against Women' ];
+
+for (var i = 0; i < toggleableLayerIds.length; i++) {
+    var id = toggleableLayerIds[i];
+    var link = document.createElement('a');
+    link.href = '#';
+    //link.className = 'active';
+    link.textContent = id;
+
+
+
+    link.onclick = function (e) {
+        var clickedLayer = this.textContent;
+
+        if (this.textContent == 'Total Crime'){
+            layers = TClayers;
+            colors = Othercolors;
+        }
+        else if (this.textContent == 'Violent Crimes'){
+            layers =  VClayers; 
+            colors = Othercolors;
+
+        }
+
+        else if (this.textContent == 'Non-violent Crimes'){
+            colors = Othercolors;
+            layers =  NVClayers; 
+        }
+
+
+        else if (this.textContent == 'Crimes Against Women'){
+            colors = Othercolors;
+            layers =  WClayers; 
+        }
+
+        else if (this.textContent == 'HDI'){
+            layers =  HDIlayers;
+            colors = HDIcolors;
+        }
+
+        // create legend
+    while (legend.hasChildNodes()) {   
+    legend.removeChild(legend.firstChild);
+    }
+
+    for (i=0; i<layers.length; i++) {
+        var layer = layers[i];
+        var color = colors[i];
+        var item = document.createElement('div');
+        var key = document.createElement('span');
+        key.className = 'legend-key';
+        key.style.backgroundColor = color;
+
+        var value = document.createElement('span');
+        value.innerHTML = layer;
+        item.appendChild(key);
+        item.appendChild(value);
+        legend.appendChild(item);
+    }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        var visibility = map.getLayoutProperty(clickedLayer, 'visibility');
+
+        if (visibility === 'visible') {
+            map.setLayoutProperty(clickedLayer, 'visibility', 'none');
+            this.className = '';
+            while (legend.hasChildNodes()) {   
+            legend.removeChild(legend.firstChild);
+            }
+        } 
+        else {
+            this.className = 'active';
+            map.setLayoutProperty(clickedLayer, 'visibility', 'visible');
+        }        
+    };
+
+
+    var layers = document.getElementById('menu');
+    layers.appendChild(link);
+}
+
+});
+</script>
+
+
 </body>
 </html>
